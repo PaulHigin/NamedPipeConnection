@@ -57,5 +57,7 @@ Describe 'NamedPipe Custom Remote Connection Tests' {
         $brokenSession.State | Should -BeExactly 'Broken'
         $brokenSession.Availability | Should -BeExactly 'None'
         $brokenSession.Runspace.RunspaceStateInfo.Reason.InnerException.GetType().Name | Should -BeExactly 'TimeoutException'
+
+        $brokenSession | Remove-PSSession
     }
 }
