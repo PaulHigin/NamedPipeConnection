@@ -28,8 +28,8 @@ Copyright = '(c) Microsoft Corporation. All rights reserved.'
 Description = "
 
 This PowerShell module implements a custom remoting connection based on named pipes.
-This module is used only for PowerShell custom remoting API testing.
-This module is built as part of the PowerShell CI system.
+It is primarily an example of how to use PowerShell APIs to create custom remote connections.
+But it is also used in PowerShell CI to test the custom remoting APIs.
 "
 
 # Minimum version of the PowerShell engine required by this module
@@ -51,10 +51,10 @@ PrivateData = @{
         Tags = @('PowerShellCustomRemoteConnection')
 
         # A URL to the license for this module.
-        LicenseUri = ''
+        LicenseUri = 'https://github.com/PowerShell/NamedPipeConnection/blob/master/LICENSE'
 
         # A URL to the main website for this project.
-        ProjectUri = ''
+        ProjectUri = 'https://github.com/powershell/NamedPipeConnection'
 
         # A URL to an icon representing this module.
         # IconUri = ''
