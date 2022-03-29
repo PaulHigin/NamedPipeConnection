@@ -3,47 +3,46 @@
 
 function Start-PwshProcess
 {
-    param (
-        [string] $FilePath = $null
-    )
-
-    if ($FilePath -eq $null -or $FilePath -eq "") {
-        $FilePath = Join-Path -Path $PSHOME -ChildPath 'pwsh'
+    $job = Start-Job -ScriptBlock { Write-Output $PID; Start-Sleep -Seconds 300 }
+    $script:JobId = $job.Id
+    $procId = -1
+    $count = 0
+    while (($procId -eq -1) -and ($count++ -lt 10))
+    {
+        Start-Sleep -Seconds 1
+        $procId = Receive-Job -Job $job
+        if ($null -eq $procId) {
+            $procId = -1
+        }
     }
 
-    $proc = Start-Process -FilePath $FilePath -WindowStyle Hidden -PassThru -ErrorAction Stop
+    if ($procId -eq -1) {
+        throw "Start-PwshProcess: Unable to start job process and obtain process Id."
+    }
 
-    return $proc.Id
+    return $procId
 }
 
-Describe 'NamedPipe Custom Remote Connection Tests' {
+Describe 'NamedPipe Custom Remote Connection Tests' -Tags 'Feature','RequireAdminOnWindows' {
 
     BeforeAll {
-        if (!$IsWindows) {
-            return
-        }
         Import-Module -Name Microsoft.PowerShell.NamedPipeConnection -ErrorAction Stop
 
+        $script:JobId = -1
         $script:PwshProcId = Start-PwshProcess
         $script:session = $null
     }
 
     AfterAll {
-        if (!$IsWindows) {
-            return
-        }
         if ($null -ne $script:session)
         {
             Remove-PSSession -Session $script:session
         }
 
-        if ($script:PwshProcId -gt 0)
-        {
-            Stop-Process -Id $script:PwshProcId
-        }
+        Remove-Job -Id $script:JobId -Force -ErrorAction SilentlyContinue
     }
 
-    It 'Verifies that New-NamedPipeSession succeeds in connectiong to Pwsh process' -Skip:(!$IsWindows) {
+    It 'Verifies that New-NamedPipeSession succeeds in connectiong to Pwsh process' {
         $script:session = New-NamedPipeSession -ProcessId $script:PwshProcId -ConnectingTimeout 10 -Name CustomNPConnection -ErrorAction Stop
 
         # Verify created PSSession
@@ -54,7 +53,7 @@ Describe 'NamedPipe Custom Remote Connection Tests' {
         $script:session.ComputerName | Should -BeExactly "LocalMachine:$($script:PwshProcId)"
     }
 
-    It 'Verifies timeout error when trying to connect to pwsh process with current connection' -Skip:(!$IsWindows) {
+    It 'Verifies timeout error when trying to connect to pwsh process with current connection' {
         $brokenSession = New-NamedPipeSession -ProcessId $script:PwshProcId -ConnectingTimeout 2 -Name CustomNPConnection -ErrorAction Stop
 
         # Verify expected broken session
